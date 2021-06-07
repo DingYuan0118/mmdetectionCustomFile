@@ -76,8 +76,8 @@ class RepBottleneck(Bottleneck):
 
         self.norm1_name, norm1 = build_norm_layer(norm_cfg, planes, postfix=1)
         # self.norm2_name, norm2 = build_norm_layer(norm_cfg, planes, postfix=2)
-        self.norm2_1name, norm2_1 = build_norm_layer(
-            norm_cfg, planes, postfix="2_1")
+        self.norm2_name, norm2 = build_norm_layer(
+            norm_cfg, planes, postfix="2")
         self.norm2_2name, norm2_2 = build_norm_layer(
             norm_cfg, planes, postfix="2_2")
         self.norm2_3name, norm2_3 = build_norm_layer(
@@ -119,7 +119,7 @@ class RepBottleneck(Bottleneck):
                 dilation=dilation,
                 bias=False)
 
-        self.add_module(self.norm2_1name, norm2_1)
+        self.add_module(self.norm2_name, norm2)
         self.add_module(self.norm2_2name, norm2_2)
         self.add_module(self.norm2_3name, norm2_3)
 
@@ -142,10 +142,10 @@ class RepBottleneck(Bottleneck):
             self.after_conv3_plugin_names = self.make_block_plugins(
                 planes * self.expansion, self.after_conv3_plugins)
 
-    @property
-    def norm2_1(self):
-        """nn.Module: normalization layer after the third convolution layer"""
-        return getattr(self, self.norm2_1name)
+    # @property
+    # def norm2_1(self):
+    #     """nn.Module: normalization layer after the third convolution layer"""
+    #     return getattr(self, self.norm2_1name)
 
     @property
     def norm2_2(self):
@@ -169,7 +169,7 @@ class RepBottleneck(Bottleneck):
                 out = self.forward_plugin(out, self.after_conv1_plugin_names)
 
             out3x3, out1x1, ident = self.conv2(out)
-            out3x3 = self.norm2_1(out3x3)
+            out3x3 = self.norm2(out3x3)
             out1x1 = self.norm2_2(out1x1)
             ident = self.norm2_3(ident)
 
@@ -248,7 +248,7 @@ class RepResnet(ResNet):
         block_init_cfg = None
         assert not (init_cfg and pretrained), \
             'init_cfg and pretrained cannot be setting at the same time'
-        assert pretrained is None, "RepResnet没有预训练模型"
+        # assert pretrained is None, "RepResnet没有预训练模型"
         if isinstance(pretrained, str):
             warnings.warn('DeprecationWarning: pretrained is a deprecated, '
                           'please use "init_cfg" instead')
