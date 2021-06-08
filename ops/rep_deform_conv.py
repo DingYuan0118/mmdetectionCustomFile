@@ -14,8 +14,9 @@ class RepDeformConv2dPackBlock(DeformConv2dPack):
         super().__init__(*args, **kwargs)
         assert self.out_channels == self.in_channels, "in repDCN, out_channel must match in_channels"
         # add con1x1
+        # TODO: check torch.Tensor初始化是否会产生问题
         self.conv1x1_weight = nn.Parameter(
-            torch.Tensor(self.out_channels, self.in_channels // self.groups, 1, 1))
+            torch.zeros(self.out_channels, self.in_channels // self.groups, 1, 1))
         # add itendity 使用常数Tensor作为weight，未知反向传播会不会出问题（应该不会）
         self.identity_weight = torch.zeros((self.out_channels, self.in_channels // self.groups, 1, 1), requires_grad=False)
 
@@ -25,7 +26,7 @@ class RepDeformConv2dPackBlock(DeformConv2dPack):
     def forward(self, x):
         offset = self.conv_offset(x) # [batch, 18, rows, cols]
         # 加入1x1，以及identity分支
-        offset1x1 = offset[:, 9:11, :, :].contiguous()
+        offset1x1 = offset[:, 8:10, :, :].contiguous()
 
         # offset must be contiguous
         out3x3 = deform_conv2d(x, offset, self.weight, self.stride, self.padding,
@@ -39,9 +40,9 @@ class RepDeformConv2dPackBlock(DeformConv2dPack):
 
 if __name__ == "__main__":
     model = RepDeformConv2dPackBlock(64,64,(3,3), padding=1).cuda()
-    input = torch.Tensor(32, 64, 224, 224).cuda()
+    input = torch.randn(32, 64, 224, 224).cuda()
     out3x3, out1x1, ident = model(input)
     print(out3x3.shape)
     print(out1x1.shape)
     print(ident.shape)
-
+    out = out3x3 + out1x1 + ident
