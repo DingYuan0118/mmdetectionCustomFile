@@ -4,6 +4,7 @@ import torch
 from mmcv.ops.deform_conv import DeformConv2dPack, deform_conv2d
 from mmcv.cnn import CONV_LAYERS
 import torch.nn as nn
+import math
 
 @CONV_LAYERS.register_module("RepDCN")
 class RepDeformConv2dPackBlock(DeformConv2dPack):
@@ -13,13 +14,16 @@ class RepDeformConv2dPackBlock(DeformConv2dPack):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert self.out_channels == self.in_channels, "in repDCN, out_channel must match in_channels"
-        # add con1x1
-        # TODO: check torch.Tensor初始化是否会产生问题
+        # add conv1x1
+        # check torch.Tensor初始化是否会产生问题? 确实会产生问题,torch.Tensor初始化时有时会产生nan值
         self.conv1x1_weight = nn.Parameter(
             torch.zeros(self.out_channels, self.in_channels // self.groups, 1, 1))
+        # self.conv1x1_weight
+        n1x1 = self.in_channels
+        stdv1x1 = 1. / math.sqrt(n1x1)
+        self.conv1x1_weight.data.uniform_(-stdv1x1, stdv1x1)
         # add itendity 使用常数Tensor作为weight，未知反向传播会不会出问题（应该不会）
         self.identity_weight = torch.zeros((self.out_channels, self.in_channels // self.groups, 1, 1), requires_grad=False)
-
         for i in range(self.in_channels):
             self.identity_weight[i, i] = 1
     
