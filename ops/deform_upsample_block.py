@@ -22,9 +22,10 @@ class DeformUpsampleBlock(DeformConv2dPack):
         self.weight = nn.Parameter(
             torch.Tensor(self.out_channels*self.scale**2, self.in_channels // self.groups,
                          *self.kernel_size))
+        self.reset_parameters()
 
         self.PS = torch.nn.PixelShuffle(self.scale)
-
+        
         
     
     def forward(self, x):
@@ -34,6 +35,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
         self.weight.data = self.weight.data.reshape(-1,self.weight.shape[1], self.kernel_size[0], self.kernel_size[1])
         output = deform_conv2d(x, offset, self.weight, self.stride, self.padding,
                              self.dilation, self.groups, self.deform_groups)
+
         output = self.PS(output)
         return output
 
