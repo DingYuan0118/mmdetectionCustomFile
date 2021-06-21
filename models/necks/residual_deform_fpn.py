@@ -51,8 +51,9 @@ class ResidualDeformFPN(FPN):
     def forward(self, inputs):
         """Forward function."""
         assert len(inputs) == len(self.in_channels)
-
+        
         # TODO:补全residual前向传播过程
+        inputs = list(inputs)
         for i in range(1, self.num_ins):
             inputs[i] = inputs[i] + self.residualblocklist[i-1](inputs[i-1])
 
@@ -161,7 +162,7 @@ if __name__ == "__main__":
     # torch.Size([2, 2048, 25, 34])
 
     in_channels = [256, 512, 1024, 2048]
-    myfpn = MyFPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
+    myfpn = ResidualDeformFPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
     standard_fpn = FPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
     total_params_myfpn = sum(p.numel() for p in myfpn.parameters())
     total_params_standart_fpn = sum(p.numel() for p in standard_fpn.parameters())
@@ -169,8 +170,9 @@ if __name__ == "__main__":
     inputs = []
     for i in range(4):
         input_tensor = torch.randn(
-            2, in_channels[i], 20*2**(3-i), 10*2**(3-i)).cuda()
+            2, in_channels[i], 10*2**(3-i), 10*2**(3-i)).cuda()
         inputs.append(input_tensor)
+    inputs = tuple(inputs)
 
     outputs = myfpn(inputs)
 
