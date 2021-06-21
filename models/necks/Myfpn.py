@@ -44,7 +44,7 @@ class MyFPN(FPN):
 
         # TODO:加入Residualblock初始化, 只需要三层
             if i != (self.num_ins-1):
-                residual_module = ResidualBlock(in_channels=self.in_channels[i], out_channels=self.in_channels[i+1])
+                residual_module = ResidualBlock(in_channels=self.in_channels[i], out_channels=self.in_channels[i+1], stride=2)
                 self.residualblocklist.append(residual_module)
 
     @auto_fp16()
@@ -54,7 +54,7 @@ class MyFPN(FPN):
 
         # TODO:补全residual前向传播过程
         for i in range(1, self.num_ins):
-            inputs[i] = inputs[i] + self.residualblocklist[i-1](inputs(i-1))
+            inputs[i] = inputs[i] + self.residualblocklist[i-1](inputs[i-1])
 
         # build laterals
         laterals = [
@@ -128,7 +128,7 @@ class ResidualBlock(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=base_channels, kernel_size=(1,1), stride=1,
                                padding=padding, dilation=dilation, bias=bias, groups=groups, padding_mode=padding_mode)
         self.norm1 = nn.BatchNorm2d(base_channels)
-        # padding置1,保持维度不变
+        # padding置1, stride置为2, 下采样
         self.conv2 = nn.Conv2d(in_channels=base_channels, out_channels=base_channels, kernel_size=(3,3), stride=stride,
                                padding=1, dilation=dilation, bias=bias, groups=groups, padding_mode=padding_mode)
         self.norm2 = nn.BatchNorm2d(base_channels)
@@ -154,15 +154,25 @@ class ResidualBlock(nn.Module):
 
 if __name__ == "__main__":
     import torch
-    in_channels = [10, 20, 40, 80]
-    fpn = MyFPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
+    # 标准输入
+    # torch.Size([2, 256, 200, 272])
+    # torch.Size([2, 512, 100, 136])
+    # torch.Size([2, 1024, 50, 68])
+    # torch.Size([2, 2048, 25, 34])
+
+    in_channels = [256, 512, 1024, 2048]
+    myfpn = MyFPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
+    standard_fpn = FPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
+    total_params_myfpn = sum(p.numel() for p in myfpn.parameters())
+    total_params_standart_fpn = sum(p.numel() for p in standard_fpn.parameters())
+    print("Myfpn parameters:{}, standard fpn parameters:{}".format(total_params_myfpn, total_params_standart_fpn))
     inputs = []
     for i in range(4):
         input_tensor = torch.randn(
-            3, in_channels[i], 10*2**(3-i), 10*2**(3-i)).cuda()
+            2, in_channels[i], 20*2**(3-i), 10*2**(3-i)).cuda()
         inputs.append(input_tensor)
 
-    outputs = fpn(inputs)
+    outputs = myfpn(inputs)
 
-    for j in range(outputs):
+    for j in outputs:
         print(j.shape)
