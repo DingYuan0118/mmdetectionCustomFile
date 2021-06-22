@@ -137,6 +137,15 @@ class ResidualBlock(nn.Module):
                                padding=padding, dilation=dilation, bias=bias, groups=groups, padding_mode=padding_mode)
         self.norm3 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=inplace)
+        self.init_weight()
+
+    def init_weight(self):
+        """
+        conv层初始化为零, norm层默认初始化为weight=1, bias=0,因此不用显示初始化
+        """
+        self.conv1.weight.data.zero_()
+        self.conv2.weight.data.zero_()
+        self.conv3.weight.data.zero_()
 
     def forward(self, x):
         out = self.conv1(x)
