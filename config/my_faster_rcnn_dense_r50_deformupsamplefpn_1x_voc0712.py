@@ -1,5 +1,5 @@
 custom_imports = dict(
-    imports=['custom.ops.rep_deform_conv', 'custom.models.backbones.dense_resnet'],
+    imports=['custom.models.necks.deform_up_fpn', 'custom.models.backbones.dense_resnet'],
     allow_failed_imports=False)
 _base_ = [
     '../../configs/_base_/models/faster_rcnn_r50_fpn.py', '../../configs/_base_/datasets/voc0712.py',

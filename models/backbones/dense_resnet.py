@@ -17,9 +17,6 @@ from custom.ops.rep_deform_conv import RepDeformConv2dPackBlock
 @BACKBONES.register_module()
 class DenseResnet(ResNet):
     """
-    调用RepBottleneck的RepResnet，实现重参数化
-    注意：Deform Conv原文中只是用在C3-C5层，因此，RepBottleneck也只使用在C3-C5层，如需全部替换
-    则需要更改make_layer分支条件
     """
 
     def __init__(self, depth,
@@ -106,7 +103,7 @@ class ResidualBlock(nn.Module):
         self.norm2 = nn.BatchNorm2d(base_channels)
         self.conv3 = nn.Conv2d(in_channels=base_channels, out_channels=out_channels, kernel_size=(1,1), stride=1,
                                padding=padding, dilation=dilation, bias=bias, groups=groups, padding_mode=padding_mode)
-        self.norm3 = nn.BatchNorm2d(out_channels)
+        # self.norm3 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=inplace)
         self.init_weight()
 
@@ -114,34 +111,33 @@ class ResidualBlock(nn.Module):
         """
         conv层初始化为零, norm层默认初始化为weight=1, bias=0,因此不用显式初始化
         """
-        self.conv1.weight.data.zero_()
-        self.conv2.weight.data.zero_()
+        # self.conv1.weight.data.zero_()
+        # self.conv2.weight.data.zero_()
         self.conv3.weight.data.zero_()
 
     def forward(self, x):
         out = self.conv1(x)
         out = self.norm1(out)
         out = self.relu(out)
-
         out = self.conv2(out)
         out = self.norm2(out)
         out = self.relu(out)
-
         out = self.conv3(out)
-        out = self.norm3(out)
+        # out = self.norm3(out)
         return out
 
+grads = {}
+ 
+def save_grad(name):
+    def hook(grad):
+        grads[name] = grad
+    return hook
 
 if __name__ == "__main__":
-    model = DenseResnet(50, 3).cuda()
-    model2 = ResNet(50, 3).cuda()
-    input = torch.Tensor(1, 3, 224, 224).cuda()
-    input2 = torch.Tensor(1, 3, 224, 224).cuda()
+    block = ResidualBlock(3, 512)
+    inputs = torch.randn(1,3,224,224)
+    outputs = block(inputs)
+    outputs = outputs.sum()
+    outputs.backward()
+    print()
 
-    out = model(input)
-    out2 = model2(input2)
-    for _ in out:
-        print(_.shape)
-    
-    for _ in out2:
-        print(_.shape)

@@ -33,9 +33,9 @@ class DeformUpFPN(FPN):
                          relu_before_extra_convs=relu_before_extra_convs, no_norm_on_lateral=no_norm_on_lateral, conv_cfg=conv_cfg, norm_cfg=norm_cfg, act_cfg=act_cfg, upsample_cfg=upsample_cfg, init_cfg=init_cfg)
         # TODO:加入Upsample定义
         self.deformupsample = nn.ModuleList()
-        for i in range(self.start_level, self.backbone_end_level):
+        for i in range(self.start_level, self.backbone_end_level-1): # 不同于laterals,upsampling仅需要3层
             upsample_module = DeformUpsampleBlock(out_channels,out_channels,kernel_size=3,groups=out_channels, padding=1)
-            self.deformupsample.append(upsample_module)        
+            self.deformupsample.append(upsample_module)
     
     @auto_fp16()
     def forward(self, inputs):
@@ -55,7 +55,7 @@ class DeformUpFPN(FPN):
             #  it cannot co-exist with `size` in `F.interpolate`.
 
             # TODO：修改上采样方法
-            laterals[i - 1] += self.deformupsample[i](laterals[i])
+            laterals[i - 1] += self.deformupsample[i-1](laterals[i])
 
 
         # build outputs
