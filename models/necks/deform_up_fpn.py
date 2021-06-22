@@ -9,7 +9,7 @@ from mmdet.models.necks import FPN
 from custom.ops.deform_upsample_block import DeformUpsampleBlock
 
 @NECKS.register_module()
-class MyFPN(FPN):
+class DeformUpFPN(FPN):
     """
 
     """
@@ -91,7 +91,7 @@ class MyFPN(FPN):
 if __name__ == "__main__":
     import torch
     in_channels = [10,20,40,80]
-    fpn = MyFPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
+    fpn = DeformUpFPN(in_channels=in_channels, out_channels=10, num_outs=5).cuda()
     inputs = []
     for i in range(4):
         input_tensor = torch.randn(3,in_channels[i],10*2**(3-i), 10*2**(3-i)).cuda()

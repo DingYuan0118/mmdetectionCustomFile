@@ -13,6 +13,7 @@ from custom.ops.deform_upsample_block import DeformUpsampleBlock
 class ResidualDeformFPN(FPN):
     """
     使用了Residual与Deform的集合
+    暂时弃用
     """
 
     def __init__(self, in_channels,
@@ -32,6 +33,11 @@ class ResidualDeformFPN(FPN):
                      type='Xavier', layer='Conv2d', distribution='uniform')):
         super().__init__(in_channels, out_channels, num_outs, start_level=start_level, end_level=end_level, add_extra_convs=add_extra_convs, extra_convs_on_inputs=extra_convs_on_inputs,
                          relu_before_extra_convs=relu_before_extra_convs, no_norm_on_lateral=no_norm_on_lateral, conv_cfg=conv_cfg, norm_cfg=norm_cfg, act_cfg=act_cfg, upsample_cfg=upsample_cfg, init_cfg=init_cfg)
+        
+        warnings.simplefilter('once')
+        warnings.warn(
+                '"ResidualDeformFPN" 暂时不使用，residual方法设计不符合思想'
+                '请使用"DenseResnet"作为实现方法', DeprecationWarning)
         # 加入Upsample初始化
         self.deformupsample = nn.ModuleList()
         self.residualblocklist = nn.ModuleList()

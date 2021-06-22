@@ -1,5 +1,5 @@
 custom_imports = dict(
-    imports=['custom.ops.deform_upsample_block', 'custom.models.necks.Myfpn'],
+    imports=['custom.ops.deform_upsample_block', 'custom.models.necks.deform_up_fpn'],
     allow_failed_imports=False)
 _base_ = '../../configs/faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py'
 model = dict(
