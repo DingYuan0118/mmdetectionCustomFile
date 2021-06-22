@@ -66,7 +66,7 @@ class DenseResnet(ResNet):
             res_layer = getattr(self, layer_name)
             x = res_layer(x)
             if i >= 1:
-                x = x + self.residualblocklist[i-1](outs[i-1])
+                x = x + self.relu(self.residualblocklist[i-1](outs[i-1]))
             if i in self.out_indices:
                 outs.append(x)
         return tuple(outs)
