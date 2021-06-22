@@ -133,18 +133,15 @@ class ResidualBlock(nn.Module):
 
 
 if __name__ == "__main__":
-    model = DenseResnet(50, 3,
-                      dcn=dict(type='RepDCN', deform_groups=1,
-                               fallback_on_stride=False),
-                      stage_with_dcn=(False, True, True, True)).cuda()
-    model2 = ResNet(50, 3,
-                    dcn=dict(type='DCN', deform_groups=1,
-                             fallback_on_stride=False),
-                    stage_with_dcn=(False, True, True, True)).cuda()
+    model = DenseResnet(50, 3).cuda()
+    model2 = ResNet(50, 3).cuda()
     input = torch.Tensor(1, 3, 224, 224).cuda()
     input2 = torch.Tensor(1, 3, 224, 224).cuda()
 
     out = model(input)
     out2 = model2(input2)
-    print(out.shape)
-    print(out2.shape)
+    for _ in out:
+        print(_.shape)
+    
+    for _ in out2:
+        print(_.shape)
