@@ -112,7 +112,7 @@ class ResidualBlock(nn.Module):
 
     def init_weight(self):
         """
-        conv层初始化为零, norm层默认初始化为weight=1, bias=0,因此不用显示初始化
+        conv层初始化为零, norm层默认初始化为weight=1, bias=0,因此不用显式初始化
         """
         self.conv1.weight.data.zero_()
         self.conv2.weight.data.zero_()
