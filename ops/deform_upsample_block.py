@@ -30,10 +30,10 @@ class DeformUpsampleBlock(DeformConv2dPack):
     
     def forward(self, x):
         offset = self.conv_offset(x) # [batch, 18, rows, cols]
-        self.weight.data = self.weight.data.reshape(-1,self.weight.shape[1], self.kernel_size[0]*self.kernel_size[1])
-        self.weight.data = F.softmax(self.weight.data, dim=-1)
-        self.weight.data = self.weight.data.reshape(-1,self.weight.shape[1], self.kernel_size[0], self.kernel_size[1])
-        output = deform_conv2d(x, offset, self.weight, self.stride, self.padding,
+        weight_tmp_ = self.weight.data.reshape(-1,self.weight.shape[1], self.kernel_size[0]*self.kernel_size[1])
+        weight_tmp = F.softmax(weight_tmp_, dim=-1)
+        weight_tmp = weight_tmp.reshape(-1,self.weight.shape[1], self.kernel_size[0], self.kernel_size[1])
+        output = deform_conv2d(x, offset, weight_tmp, self.stride, self.padding,
                              self.dilation, self.groups, self.deform_groups)
 
         output = self.PS(output)
