@@ -31,7 +31,7 @@ class DeformUpFPN(FPN):
                      type='Xavier', layer='Conv2d', distribution='uniform')):
         super().__init__(in_channels, out_channels, num_outs, start_level=start_level, end_level=end_level, add_extra_convs=add_extra_convs, extra_convs_on_inputs=extra_convs_on_inputs,
                          relu_before_extra_convs=relu_before_extra_convs, no_norm_on_lateral=no_norm_on_lateral, conv_cfg=conv_cfg, norm_cfg=norm_cfg, act_cfg=act_cfg, upsample_cfg=upsample_cfg, init_cfg=init_cfg)
-        # TODO:加入Upsample定义
+        # 加入Upsample定义
         self.deformupsample = nn.ModuleList()
         for i in range(self.start_level, self.backbone_end_level-1): # 不同于laterals,upsampling仅需要3层
             upsample_module = DeformUpsampleBlock(out_channels,out_channels,kernel_size=3,groups=out_channels, padding=1)
@@ -54,7 +54,7 @@ class DeformUpFPN(FPN):
             # In some cases, fixing `scale factor` (e.g. 2) is preferred, but
             #  it cannot co-exist with `size` in `F.interpolate`.
 
-            # TODO：修改上采样方法
+            # 修改上采样方法
             laterals[i - 1] += self.deformupsample[i-1](laterals[i])
 
 

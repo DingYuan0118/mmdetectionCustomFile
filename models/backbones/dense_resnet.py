@@ -17,6 +17,7 @@ from custom.ops.rep_deform_conv import RepDeformConv2dPackBlock
 @BACKBONES.register_module()
 class DenseResnet(ResNet):
     """
+    在resnet backbone基础上增加了dense连接,加快fpn上层特征梯度传导置backbone下层
     """
 
     def __init__(self, depth,
@@ -66,8 +67,8 @@ class DenseResnet(ResNet):
             res_layer = getattr(self, layer_name)
             x = res_layer(x)
             if i >= 1:
-                # TODO: 由于输入为0，导致Relu截断了梯度，使residualblocklist得不到训练
-                x = x + self.relu(self.residualblocklist[i-1](outs[i-1]))
+                # 由于输入为0，导致Relu截断了梯度，使residualblocklist得不到训练
+                x = self.relu(x + self.residualblocklist[i-1](outs[i-1]))
             if i in self.out_indices:
                 outs.append(x)
         return tuple(outs)
