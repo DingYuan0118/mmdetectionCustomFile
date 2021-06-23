@@ -66,6 +66,7 @@ class DenseResnet(ResNet):
             res_layer = getattr(self, layer_name)
             x = res_layer(x)
             if i >= 1:
+                # TODO: 由于输入为0，导致Relu截断了梯度，使residualblocklist得不到训练
                 x = x + self.relu(self.residualblocklist[i-1](outs[i-1]))
             if i in self.out_indices:
                 outs.append(x)
@@ -125,13 +126,6 @@ class ResidualBlock(nn.Module):
         out = self.conv3(out)
         # out = self.norm3(out)
         return out
-
-grads = {}
- 
-def save_grad(name):
-    def hook(grad):
-        grads[name] = grad
-    return hook
 
 if __name__ == "__main__":
     block = ResidualBlock(3, 512)
