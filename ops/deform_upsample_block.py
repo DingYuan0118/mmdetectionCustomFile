@@ -30,6 +30,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
     
     def forward(self, x):
         offset = self.conv_offset(x) # [batch, 18, rows, cols]
+        # TODO: 对weight使用softmax时会导致梯度为None，需要小心，注意self.weight于self.weight.data的差别
         output = deform_conv2d(x, offset, self.weight, self.stride, self.padding,
                              self.dilation, self.groups, self.deform_groups)
 
