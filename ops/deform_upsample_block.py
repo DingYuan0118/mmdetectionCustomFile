@@ -17,6 +17,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
         assert self.out_channels == self.in_channels, "in repDCN, out_channel must match in_channels"
         # self.groups = self.in_channels   #分组卷积
         self.scale = 2 # 上采样尺度
+        self.temperature = 10
         del self.weight
         # only weight, no bias
 
@@ -54,7 +55,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
         # assert B==1, "当前只支持batchsize为1的上采样"
         self.weight = self.conv_weight(self.avgpool(x).view(B, C))
         weight_tmp_ = self.weight.reshape(self.scale**2, -1, self.kernel_size[0]*self.kernel_size[1])
-        weight_tmp = F.softmax(weight_tmp_, dim=-1)
+        weight_tmp = F.softmax(weight_tmp_ * self.temperature, dim=-1)
         weight_tmp = weight_tmp.reshape(self.scale**2, -1,self.kernel_size[0], self.kernel_size[1])
         weight_repeat = weight_tmp.repeat(self.out_channels, 1, 1, 1)
         output = []
