@@ -17,7 +17,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
         assert self.out_channels == self.in_channels, "in repDCN, out_channel must match in_channels"
         # self.groups = self.in_channels   #分组卷积
         self.scale = 2 # 上采样尺度
-        self.temperature = 10
+        # self.temperature = 10
         del self.weight
         # only weight, no bias
 
@@ -50,12 +50,36 @@ class DeformUpsampleBlock(DeformConv2dPack):
     def forward(self, x):
         offset = self.conv_offset(x) # [batch, 18, rows, cols]
         # 对weight使用softmax时会导致梯度为None，需要小心，注意self.weight于self.weight.data的差别
+     
+        [B, C, H, W] = x.size()
+        # assert B==1, "当前只支持batchsize为1的上采样"
+        self.weight = self.conv_weight(self.avgpool(x).view(B, C))
+        weight_tmp_ = self.weight.reshape(self.scale**2, -1, self.kernel_size[0]*self.kernel_size[1])
+        weight_tmp = F.softmax(weight_tmp_, dim=-1)
+        weight_tmp = weight_tmp.reshape(self.scale**2, -1, self.kernel_size[0], self.kernel_size[1])
+        weight_repeat = weight_tmp.repeat(self.out_channels, 1, 1, 1)
+        x = x.reshape(-1, B*C, H, W)
+        offset = offset.reshape(-1, B*self.kernel_size[0] * self.kernel_size[1] * 2, H, W)
+        # 注意reshape操作与想象中可能不同，此处不方便直接使用reshape
+        weight_last = weight_repeat[:,0].unsqueeze(1)
+        for i in range(1, B):
+            weight_last = torch.cat((weight_last, weight_repeat[:,i].unsqueeze(1)))
+
+        output = deform_conv2d(x, offset, weight_last, self.stride, self.padding,
+                            self.dilation, self.groups*B, self.deform_groups*B)
+        output = output.reshape(B, -1 ,H, W)
+        output = self.PS(output)
+        return output
+
+    def forward2(self, x):
+        offset = self.conv_offset(x) # [batch, 18, rows, cols]
+        # 对weight使用softmax时会导致梯度为None，需要小心，注意self.weight于self.weight.data的差别
 
         [B, C, H, W] = x.size()
         # assert B==1, "当前只支持batchsize为1的上采样"
         self.weight = self.conv_weight(self.avgpool(x).view(B, C))
         weight_tmp_ = self.weight.reshape(self.scale**2, -1, self.kernel_size[0]*self.kernel_size[1])
-        weight_tmp = F.softmax(weight_tmp_ * self.temperature, dim=-1)
+        weight_tmp = F.softmax(weight_tmp_, dim=-1)
         weight_tmp = weight_tmp.reshape(self.scale**2, -1,self.kernel_size[0], self.kernel_size[1])
         weight_repeat = weight_tmp.repeat(self.out_channels, 1, 1, 1)
         output = []
@@ -69,5 +93,6 @@ class DeformUpsampleBlock(DeformConv2dPack):
 if __name__ == "__main__":
     model = DeformUpsampleBlock(256,256,(3,3), padding=1, groups=256).cuda()
     input = torch.randn(2,256,4,4).cuda()
-    out3x3 = model(input)
-    print(out3x3.shape)
+    out1 = model.forward(input)
+    out2 = model.forward2(input)
+    print((out2 == out1).all())
