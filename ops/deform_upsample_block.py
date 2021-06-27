@@ -90,9 +90,33 @@ class DeformUpsampleBlock(DeformConv2dPack):
         output = self.PS(output)
         return output
 
+    def forward3(self, x):
+        offset = self.conv_offset(x) # [batch, 18, rows, cols]
+        # 对weight使用softmax时会导致梯度为None，需要小心，注意self.weight于self.weight.data的差别
+
+        [B, C, H, W] = x.size()
+        # assert B==1, "当前只支持batchsize为1的上采样"
+        self.weight = self.conv_weight(self.avgpool(x).view(B, C))
+        weight_tmp_ = self.weight.reshape(-1, self.scale**2, 1,self.kernel_size[0]*self.kernel_size[1])
+        weight_tmp = F.softmax(weight_tmp_, dim=-1)
+        weight_tmp = weight_tmp.reshape(-1, self.scale**2, 1, self.kernel_size[0], self.kernel_size[1])
+        weight_repeat = weight_tmp.repeat(1, self.out_channels, 1, 1, 1)
+        weight_last = weight_repeat.reshape(-1, 1, self.kernel_size[0], self.kernel_size[1])
+        x = x.reshape(-1, B*C, H, W)
+        offset = offset.reshape(-1, B*self.kernel_size[0] * self.kernel_size[1] * 2, H, W)
+        output = deform_conv2d(x, offset, weight_last, self.stride, self.padding,
+                            self.dilation, self.groups*B, self.deform_groups*B)
+        output = output.reshape(B, -1 ,H, W)
+        output = self.PS(output)
+        return output
+
+
+
 if __name__ == "__main__":
     model = DeformUpsampleBlock(256,256,(3,3), padding=1, groups=256).cuda()
     input = torch.randn(2,256,4,4).cuda()
     out1 = model.forward(input)
     out2 = model.forward2(input)
+    out3 = model.forward3(input)
     print((out2 == out1).all())
+    print((out2 == out3).all())
