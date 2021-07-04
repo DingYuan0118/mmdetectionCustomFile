@@ -24,7 +24,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
 
         self.PS = torch.nn.PixelShuffle(self.scale)
         self.weight = torch.ones_like(self.weight) / 9
-    
+    # 2021.07.04
     def forward(self, x):
         offset = self.conv_offset(x) # [batch, 18, rows, cols]
         # offset_repeat = offset.repeat(1,self.out_channels, 1, 1)
@@ -38,6 +38,19 @@ class DeformUpsampleBlock(DeformConv2dPack):
         output = self.PS(output)
         return output
 
+    # 2021.07.05
+    # def forward(self, x):
+    #     offset = self.conv_offset(x) # [batch, 18, rows, cols]
+    #     # inputs = x.repeat(1, self.deform_groups, 1, 1)
+    #     output = deform_conv2d(x, offset, self.weight, self.stride, self.padding,
+    #                          self.dilation, self.groups, self.deform_groups)
+    #     # 需要重拍通道 1 2 3 4 ... 256 1 2 3 4 ... 256 1 2 3 4 ... 256 1 2 3 4 ... 256 -> 1 1 1 1 2 2 2 2 .... 256 256 256 256
+    #     # 由于此处使用固定average weight，因此weight不需要重排
+    #     output = self.shuffle_channels(output, self.deform_groups)
+
+    #     output = self.PS(output)
+    #     return output
+
     def shuffle_channels(self, x, groups):
         '''
             Channel shuffle: [N,C,H,W] -> [N,g,C/g,H,W] -> [N,C/g,g,H,W] -> [N,C,H,W]
@@ -49,7 +62,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
 
 
 if __name__ == "__main__":
-    model = DeformUpsampleBlock(256,256,(3,3), padding=1, groups=256, deform_groups=4).cuda()
+    model = DeformUpsampleBlock(256,256,(3,3), padding=1, groups=1, deform_groups=4).cuda()
     input = torch.randn(2,256,4,4).cuda()
     out1 = model.forward(input)
     print(out1.shape)
