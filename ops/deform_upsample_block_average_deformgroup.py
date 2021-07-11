@@ -62,7 +62,7 @@ class DeformUpsampleBlock(DeformConv2dPack):
 
 
 if __name__ == "__main__":
-    model = DeformUpsampleBlock(256,256,(3,3), padding=1, groups=1, deform_groups=4).cuda()
+    model = DeformUpsampleBlock(256,256,(3,3), padding=1, groups=1, deform_groups=1).cuda()
     input = torch.randn(2,256,4,4).cuda()
     out1 = model.forward(input)
     print(out1.shape)
