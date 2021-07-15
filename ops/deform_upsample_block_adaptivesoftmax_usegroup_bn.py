@@ -31,13 +31,13 @@ class DeformUpsampleBlock(DeformConv2dPack):
         self.conv_weight = nn.Sequential(
             nn.Linear(
                 self.out_channels,
-                self.out_channels//16,
+                self.out_channels//4,
                 bias=False
             ),
-            nn.BatchNorm1d(self.out_channels//16), # 07 05添加
+            nn.BatchNorm1d(self.out_channels//4), # 07 05添加
             nn.ReLU(inplace=True), 
             nn.Linear(
-                self.out_channels//16,
+                self.out_channels//4,
                 self.scale**2*self.kernel_size[0]*self.kernel_size[1],
                 bias=False
             ),
