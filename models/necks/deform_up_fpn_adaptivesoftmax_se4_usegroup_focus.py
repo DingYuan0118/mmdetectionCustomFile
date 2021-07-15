@@ -7,6 +7,7 @@ from mmcv.runner import BaseModule, auto_fp16
 from mmdet.models.builder import NECKS
 from mmdet.models.necks import FPN
 from custom.ops.deform_upsample_block_adaptivesoftmax_se4_usegroup_focus import DeformUpsampleBlock
+from mmcv.runner import ModuleList
 
 @NECKS.register_module()
 class DeformUpFPN(FPN):
@@ -32,7 +33,7 @@ class DeformUpFPN(FPN):
         super().__init__(in_channels, out_channels, num_outs, start_level=start_level, end_level=end_level, add_extra_convs=add_extra_convs, extra_convs_on_inputs=extra_convs_on_inputs,
                          relu_before_extra_convs=relu_before_extra_convs, no_norm_on_lateral=no_norm_on_lateral, conv_cfg=conv_cfg, norm_cfg=norm_cfg, act_cfg=act_cfg, upsample_cfg=upsample_cfg, init_cfg=init_cfg)
         # 加入Upsample定义
-        self.deformupsample = nn.ModuleList()
+        self.deformupsample = ModuleList(init_cfg=None)
         for i in range(self.start_level, self.backbone_end_level-1): # 不同于laterals,upsampling仅需要3层
             upsample_module = DeformUpsampleBlock(out_channels,out_channels,kernel_size=3,groups=out_channels, padding=1)
             self.deformupsample.append(upsample_module)
