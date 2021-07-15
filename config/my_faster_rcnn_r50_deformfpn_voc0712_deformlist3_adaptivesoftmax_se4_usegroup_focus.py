@@ -11,7 +11,9 @@ neck=dict(
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         num_outs=5,
-        init_cfg=dict(type='Xavier', distribution='uniform', override=[dict(name='lateral_convs'), dict(name='fpn_convs')])))
+        init_cfg=dict(type='Xavier', distribution='uniform', override=[dict(name='lateral_convs'), dict(name='fpn_convs')])
+))
+
 # optimizer
 optimizer = dict(type='SGD', lr=0.00125, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=None)
